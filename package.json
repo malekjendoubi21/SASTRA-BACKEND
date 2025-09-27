@@ -2,7 +2,7 @@
   "name": "sastra-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "node src/index.js",
+  "main": "src/index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node src/index.js",
