@@ -1,7 +1,6 @@
-// ❌ pas besoin de node-fetch car Node 22 a fetch intégré
-// const fetch = require("node-fetch");
 const RegionStat = require('../models/RegionStat');
 
+// 📍 Enregistrer la région de l'utilisateur
 const trackLocation = async (req, res) => {
     try {
         const { latitude, longitude } = req.body;
@@ -10,9 +9,23 @@ const trackLocation = async (req, res) => {
             return res.status(400).json({ message: "Coordonnées manquantes" });
         }
 
+        // Appel API OpenStreetMap avec User-Agent pour éviter blocage
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            {
+                headers: {
+                    'User-Agent': 'SastraBackend/1.0 (contact@tonemail.com)',
+                    'Accept-Language': 'fr'
+                }
+            }
         );
+
+        // Vérifie que la réponse est OK
+        if (!response.ok) {
+            console.error("Erreur API Nominatim :", response.status, response.statusText);
+            return res.status(500).json({ message: "Erreur API localisation" });
+        }
+
         const data = await response.json();
 
         const region =
@@ -21,6 +34,7 @@ const trackLocation = async (req, res) => {
             data?.address?.region ||
             "Inconnue";
 
+        // Sauvegarde en DB
         const stat = new RegionStat({ region, latitude, longitude });
         await stat.save();
 
@@ -30,7 +44,6 @@ const trackLocation = async (req, res) => {
         res.status(500).json({ message: "Erreur lors de l'enregistrement" });
     }
 };
-
 
 // 📊 Récupérer les statistiques (pour le backoffice admin)
 const getRegionStats = async (req, res) => {
@@ -49,10 +62,10 @@ const getRegionStats = async (req, res) => {
 
         res.json(stats);
     } catch (error) {
+        console.error("Erreur récupération stats:", error);
         res.status(500).json({ message: "Erreur lors de la récupération", error });
     }
 };
-
 
 // ✅ Export façon CommonJS
 module.exports = {
