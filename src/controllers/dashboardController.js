@@ -33,8 +33,15 @@ const trackLocation = async(req, res) => {
             (data && data.address && data.address.region) ||
             "Inconnue";
 
+        const city =
+            (data && data.address && data.address.city) ||
+            (data && data.address && data.address.town) ||
+            (data && data.address && data.address.village) ||
+            (data && data.address && data.address.hamlet) ||
+            region; // fallback to region if no city
+
         // Sauvegarde en DB
-        const stat = new RegionStat({ region, latitude, longitude });
+        const stat = new RegionStat({ region, city, latitude, longitude });
         await stat.save();
 
         res.json({ success: true, region });
@@ -69,7 +76,18 @@ const getRegionStats = async(req, res) => {
 const getRegionPoints = async(req, res) => {
     try {
         const { region } = req.params;
-        const points = await RegionStat.find({ region }).select('latitude longitude -_id');
+        const points = await RegionStat.aggregate([
+            { $match: { region } },
+            {
+                $group: {
+                    _id: "$city",
+                    count: { $sum: 1 },
+                    latitude: { $avg: "$latitude" },
+                    longitude: { $avg: "$longitude" }
+                }
+            },
+            { $sort: { count: -1 } }
+        ]);
         res.json(points);
     } catch (error) {
         console.error("Erreur récupération points région:", error);
