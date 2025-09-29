@@ -1,7 +1,7 @@
 const RegionStat = require('../models/RegionStat');
 
 // 📍 Enregistrer la région de l'utilisateur
-const trackLocation = async (req, res) => {
+const trackLocation = async(req, res) => {
     try {
         const { latitude, longitude } = req.body;
 
@@ -11,8 +11,7 @@ const trackLocation = async (req, res) => {
 
         // Appel API OpenStreetMap avec User-Agent pour éviter blocage
         const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            {
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`, {
                 headers: {
                     'User-Agent': 'SastraBackend/1.0 (contact@tonemail.com)',
                     'Accept-Language': 'fr'
@@ -29,9 +28,9 @@ const trackLocation = async (req, res) => {
         const data = await response.json();
 
         const region =
-            data?.address?.state ||
-            data?.address?.county ||
-            data?.address?.region ||
+            data ? .address ? .state ||
+            data ? .address ? .county ||
+            data ? .address ? .region ||
             "Inconnue";
 
         // Sauvegarde en DB
@@ -46,10 +45,9 @@ const trackLocation = async (req, res) => {
 };
 
 // 📊 Récupérer les statistiques (pour le backoffice admin)
-const getRegionStats = async (req, res) => {
+const getRegionStats = async(req, res) => {
     try {
-        const stats = await RegionStat.aggregate([
-            {
+        const stats = await RegionStat.aggregate([{
                 $group: {
                     _id: "$region",
                     count: { $sum: 1 },
@@ -68,7 +66,7 @@ const getRegionStats = async (req, res) => {
 };
 
 // 📍 Récupérer tous les points d'une région spécifique
-const getRegionPoints = async (req, res) => {
+const getRegionPoints = async(req, res) => {
     try {
         const { region } = req.params;
         const points = await RegionStat.find({ region }).select('latitude longitude -_id');
