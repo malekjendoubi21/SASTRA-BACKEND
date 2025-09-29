@@ -67,8 +67,21 @@ const getRegionStats = async (req, res) => {
     }
 };
 
+// 📍 Récupérer tous les points d'une région spécifique
+const getRegionPoints = async (req, res) => {
+    try {
+        const { region } = req.params;
+        const points = await RegionStat.find({ region }).select('latitude longitude -_id');
+        res.json(points);
+    } catch (error) {
+        console.error("Erreur récupération points région:", error);
+        res.status(500).json({ message: "Erreur lors de la récupération des points", error });
+    }
+};
+
 // ✅ Export façon CommonJS
 module.exports = {
     trackLocation,
-    getRegionStats
+    getRegionStats,
+    getRegionPoints
 };
