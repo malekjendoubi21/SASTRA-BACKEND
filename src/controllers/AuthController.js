@@ -4,9 +4,9 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
 // Register
-exports.register = async (req, res) => {
+exports.register = async(req, res) => {
     try {
-        const { nom, prenom, mail, motDePasse, age, numeroTelephone, adresse, region, ville } = req.body;
+        const { nom, prenom, mail, motDePasse, age, numeroTelephone, adresse, region, ville, latitude, longitude } = req.body;
 
         // Vérifier si l'email existe déjà
         const existingUser = await User.findOne({ mail });
@@ -24,7 +24,9 @@ exports.register = async (req, res) => {
             numeroTelephone,
             adresse,
             region,
-            ville
+            ville,
+            latitude,
+            longitude
         });
 
         await newUser.save();
@@ -36,7 +38,7 @@ exports.register = async (req, res) => {
 };
 
 // Login
-exports.login = async (req, res) => {
+exports.login = async(req, res) => {
     try {
         const { mail, motDePasse } = req.body;
 
@@ -47,20 +49,18 @@ exports.login = async (req, res) => {
         if (!isPasswordValid) return res.status(400).json({ message: "Mot de passe incorrect" });
 
         // Générer un token
-        const token = jwt.sign(
-            { id: user._id, mail: user.mail, typeUser: user.typeUser }, // <-- ici
-            process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+        const token = jwt.sign({ id: user._id, mail: user.mail, typeUser: user.typeUser }, // <-- ici
+            process.env.JWT_SECRET, { expiresIn: "1h" }
         );
 
-        res.json({ message: "Connexion réussie", token ,typeUser : user.typeUser});
+        res.json({ message: "Connexion réussie", token, typeUser: user.typeUser });
     } catch (err) {
         res.status(500).json({ message: "Erreur serveur", error: err.message });
     }
 };
 
 // Profile (protégé par JWT)
-exports.profile = async (req, res) => {
+exports.profile = async(req, res) => {
     try {
         const user = await User.findById(req.user.id).select("-motDePasse");
         if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
@@ -71,7 +71,7 @@ exports.profile = async (req, res) => {
     }
 };
 // Mot de passe oublié (envoie un code)
-exports.forgotPasswordCode = async (req, res) => {
+exports.forgotPasswordCode = async(req, res) => {
     try {
         const { mail } = req.body;
         const user = await User.findOne({ mail });
@@ -109,7 +109,7 @@ exports.forgotPasswordCode = async (req, res) => {
 };
 
 // Réinitialiser mot de passe avec code
-exports.resetPasswordWithCode = async (req, res) => {
+exports.resetPasswordWithCode = async(req, res) => {
     try {
         const { mail, code, nouveauMotDePasse } = req.body;
 
@@ -136,7 +136,7 @@ exports.resetPasswordWithCode = async (req, res) => {
 // Assurez-vous d'avoir un middleware authMiddleware.js avec verifyToken
 
 // Update mot de passe (user connecté)
-exports.updatePassword = async (req, res) => {
+exports.updatePassword = async(req, res) => {
     try {
         const { ancienMotDePasse, nouveauMotDePasse } = req.body;
 
@@ -156,7 +156,7 @@ exports.updatePassword = async (req, res) => {
 };
 
 // Update profil (user connecté, sans mot de passe)
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async(req, res) => {
     try {
         const { nom, prenom, age, numeroTelephone, adresse, region, ville } = req.body;
 

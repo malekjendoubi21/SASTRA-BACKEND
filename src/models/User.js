@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    latitude: {
+        type: Number,
+        required: true
+    },
+    longitude: {
+        type: Number,
+        required: true
+    },
     resetPasswordCode: {
         type: String
     },
@@ -55,3 +63,5 @@ const userSchema = new mongoose.Schema({
         default: 'user' // par défaut
     }
 }, { timestamps: true });
+
+module.exports = mongoose.model('User', userSchema);

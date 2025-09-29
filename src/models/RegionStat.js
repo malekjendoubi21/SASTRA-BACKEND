@@ -6,8 +6,9 @@ const regionStatSchema = new mongoose.Schema({
     country: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
-    ip: { type: String },
-    userAgent: { type: String },
+    vpnDetected: { type: Boolean, default: false },
+    postalCode: { type: String, unique: true, sparse: true },
+    referrer: { type: String },
     date: { type: Date, default: Date.now },
 });
 

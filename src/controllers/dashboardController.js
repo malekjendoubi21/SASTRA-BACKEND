@@ -27,6 +27,8 @@ const trackLocation = async(req, res) => {
 
         const data = await response.json();
 
+        console.log('Nominatim data:', JSON.stringify(data, null, 2)); // Debug log
+
         const region =
             (data && data.address && data.address.state) ||
             (data && data.address && data.address.county) ||
@@ -44,6 +46,37 @@ const trackLocation = async(req, res) => {
             (data && data.address && data.address.country) ||
             "Inconnue";
 
+        // Récupération du code postal avec plusieurs possibilités
+        const postalCode = data && data.address && (
+            data.address.postcode ||
+            data.address.postal_code ||
+            data.address.zipcode ||
+            data.address['postal-code']
+        );
+
+        console.log('Extracted postal code:', postalCode); // Debug log
+
+        // Nettoyer les doublons existants pour ce code postal avant d'enregistrer
+        if (postalCode) {
+            try {
+                // Supprimer tous les documents avec ce code postal sauf le plus récent
+                const duplicates = await RegionStat.find({ postalCode }).sort({ date: -1 });
+                if (duplicates.length > 0) {
+                    // Garder seulement le plus récent, supprimer les autres
+                    const toDelete = duplicates.slice(1).map(doc => doc._id);
+                    if (toDelete.length > 0) {
+                        await RegionStat.deleteMany({ _id: { $in: toDelete } });
+                        console.log(`Supprimé ${toDelete.length} doublons pour le code postal ${postalCode}`);
+                    }
+                    // Si un document existe déjà, ne pas en créer un nouveau
+                    console.log('Code postal déjà enregistré, skipping:', postalCode);
+                    return res.json({ success: true, message: "Localisation déjà enregistrée pour ce code postal" });
+                }
+            } catch (cleanupError) {
+                console.error('Erreur lors du nettoyage des doublons:', cleanupError);
+            }
+        }
+
         // Sauvegarde en DB
         const stat = new RegionStat({
             region,
@@ -51,11 +84,20 @@ const trackLocation = async(req, res) => {
             country,
             latitude,
             longitude,
-            ip: req.ip || req.connection.remoteAddress,
-            userAgent: req.get('User-Agent')
+            vpnDetected: false, // TODO: Implémenter la détection VPN
+            postalCode: postalCode || null,
+            referrer: req.headers.referer || req.get('Referer') || 'Direct'
         });
-        await stat.save();
 
+        try {
+            await stat.save();
+        } catch (error) {
+            if (error.code === 11000) { // Erreur de duplicata MongoDB
+                console.log('Code postal déjà enregistré, skipping:', postalCode);
+                return res.json({ success: true, message: "Localisation déjà enregistrée pour ce code postal" });
+            }
+            throw error; // Relancer l'erreur si ce n'est pas un duplicata
+        }
         res.json({ success: true, region });
     } catch (error) {
         console.error("Erreur localisation:", error);
