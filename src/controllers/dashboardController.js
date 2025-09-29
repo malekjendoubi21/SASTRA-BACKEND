@@ -105,6 +105,30 @@ const getCountryStats = async(req, res) => {
     }
 };
 
+// 📊 Récupérer les régions d'un pays spécifique
+const getRegionsByCountry = async(req, res) => {
+    try {
+        const { country } = req.params;
+        const stats = await RegionStat.aggregate([
+            { $match: { country } },
+            {
+                $group: {
+                    _id: "$region",
+                    count: { $sum: 1 },
+                    latitude: { $first: "$latitude" },
+                    longitude: { $first: "$longitude" }
+                }
+            },
+            { $sort: { count: -1 } },
+        ]);
+
+        res.json(stats);
+    } catch (error) {
+        console.error("Erreur récupération régions pays:", error);
+        res.status(500).json({ message: "Erreur lors de la récupération", error });
+    }
+};
+
 // 📍 Récupérer tous les points d'une région spécifique
 const getRegionPoints = async(req, res) => {
     try {
@@ -122,5 +146,6 @@ module.exports = {
     trackLocation,
     getRegionStats,
     getCountryStats,
+    getRegionsByCountry,
     getRegionPoints
 };

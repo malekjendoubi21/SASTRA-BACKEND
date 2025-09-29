@@ -52,8 +52,6 @@ const userSchema = new mongoose.Schema({
     typeUser: {
         type: String,
         enum: ['user', 'admin'], // valeurs possibles
-        default: 'user'           // par défaut
+        default: 'user' // par défaut
     }
 }, { timestamps: true });
-
-module.exports = mongoose.model('User', userSchema);
