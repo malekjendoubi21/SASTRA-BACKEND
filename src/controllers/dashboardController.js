@@ -40,10 +40,15 @@ const trackLocation = async(req, res) => {
             (data && data.address && data.address.hamlet) ||
             region; // fallback to region if no city
 
+        const country =
+            (data && data.address && data.address.country) ||
+            "Inconnue";
+
         // Sauvegarde en DB
         const stat = new RegionStat({
             region,
             city,
+            country,
             latitude,
             longitude,
             ip: req.ip || req.connection.remoteAddress,
@@ -79,6 +84,27 @@ const getRegionStats = async(req, res) => {
     }
 };
 
+// 📊 Récupérer les statistiques par pays
+const getCountryStats = async(req, res) => {
+    try {
+        const stats = await RegionStat.aggregate([{
+                $group: {
+                    _id: "$country",
+                    count: { $sum: 1 },
+                    latitude: { $first: "$latitude" },
+                    longitude: { $first: "$longitude" }
+                }
+            },
+            { $sort: { count: -1 } },
+        ]);
+
+        res.json(stats);
+    } catch (error) {
+        console.error("Erreur récupération stats pays:", error);
+        res.status(500).json({ message: "Erreur lors de la récupération", error });
+    }
+};
+
 // 📍 Récupérer tous les points d'une région spécifique
 const getRegionPoints = async(req, res) => {
     try {
@@ -95,5 +121,6 @@ const getRegionPoints = async(req, res) => {
 module.exports = {
     trackLocation,
     getRegionStats,
+    getCountryStats,
     getRegionPoints
 };

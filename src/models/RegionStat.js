@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const regionStatSchema = new mongoose.Schema({
     region: { type: String, required: true },
     city: { type: String, required: true },
+    country: { type: String, required: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
     ip: { type: String },
