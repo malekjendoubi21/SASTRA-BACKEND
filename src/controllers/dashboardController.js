@@ -28,9 +28,9 @@ const trackLocation = async(req, res) => {
         const data = await response.json();
 
         const region =
-            data ? .address ? .state ||
-            data ? .address ? .county ||
-            data ? .address ? .region ||
+            (data && data.address && data.address.state) ||
+            (data && data.address && data.address.county) ||
+            (data && data.address && data.address.region) ||
             "Inconnue";
 
         // Sauvegarde en DB
